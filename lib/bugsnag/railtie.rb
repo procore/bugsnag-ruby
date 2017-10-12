@@ -17,7 +17,14 @@ module Bugsnag
       runner do
         at_exit do
           if $!
-            Bugsnag.auto_notify($!)
+            Bugsnag.auto_notify($!, {
+              :severity_reason => {
+                :type => Bugsnag::Notification::UNHANDLED_EXCEPTION_MIDDLEWARE,
+                :attributes => {
+                  :framework => "Rails"
+                }
+              }
+            })
           end
         end
       end
@@ -34,19 +41,16 @@ module Bugsnag
 
       # Auto-load configuration settings from config/bugsnag.yml if it exists
       config_file = ::Rails.root.join("config", "bugsnag.yml")
-      config = YAML.load_file(config_file) if File.exists?(config_file)
+      config = YAML.load_file(config_file) if File.exist?(config_file)
       Bugsnag.configure(config[::Rails.env] ? config[::Rails.env] : config) if config
 
-      if defined?(::ActionController::Base)
+      ActiveSupport.on_load(:action_controller) do
         require "bugsnag/rails/controller_methods"
-        ::ActionController::Base.send(:include, Bugsnag::Rails::ControllerMethods)
+        include Bugsnag::Rails::ControllerMethods
       end
-      if defined?(ActionController::API)
-        ActionController::API.send(:include, Bugsnag::Rails::ControllerMethods)
-      end
-      if defined?(ActiveRecord::Base)
+      ActiveSupport.on_load(:active_record) do
         require "bugsnag/rails/active_record_rescue"
-        ActiveRecord::Base.send(:include, Bugsnag::Rails::ActiveRecordRescue)
+        include Bugsnag::Rails::ActiveRecordRescue
       end
 
       Bugsnag.configuration.app_type = "rails"

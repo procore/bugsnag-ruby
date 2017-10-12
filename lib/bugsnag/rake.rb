@@ -5,14 +5,21 @@ Rake::TaskManager.record_task_metadata = true
 class Rake::Task
 
   def execute_with_bugsnag(args=nil)
-    Bugsnag.configuration.app_type = "rake"
+    Bugsnag.configuration.app_type ||= "rake"
     old_task = Bugsnag.configuration.request_data[:bugsnag_running_task]
     Bugsnag.set_request_data :bugsnag_running_task, self
 
     execute_without_bugsnag(args)
 
   rescue Exception => ex
-    Bugsnag.auto_notify(ex)
+    Bugsnag.auto_notify(ex, {
+      :severity_reason => {
+        :type => Bugsnag::Notification::UNHANDLED_EXCEPTION_MIDDLEWARE,
+        :attributes => {
+          :framework => "Rake"
+        }
+      }
+    })
     raise
   ensure
     Bugsnag.set_request_data :bugsnag_running_task, old_task

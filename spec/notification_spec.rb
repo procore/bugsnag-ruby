@@ -113,6 +113,83 @@ describe Bugsnag::Notification do
     }
   end
 
+  it "uses correct unhandled defaults" do
+    Bugsnag.notify(BugsnagTestException.new("It crashed"))
+    
+    expect(Bugsnag).to have_sent_notification{ |payload|
+      event = get_event_from_payload(payload)
+      expect(event["unhandled"]).to be false
+      expect(event["severity"]).to eq("warning")
+      expect(event["severityReason"]).to eq({
+        "type" => "handledException"
+      })
+    }
+  end
+
+  it "sets correct severityReason if severity is modified" do
+    Bugsnag.notify(BugsnagTestException.new("It crashed"), {:severity => "info"})
+
+    expect(Bugsnag).to have_sent_notification{ |payload|
+      event = get_event_from_payload(payload)
+      expect(event["unhandled"]).to be false
+      expect(event["severity"]).to eq("info")
+      expect(event["severityReason"]).to eq({
+        "type" => "userSpecifiedSeverity"
+      })
+    }
+  end
+
+  it "sets correct severityReason if severity is modified in a block" do
+    Bugsnag.notify(BugsnagTestException.new("It crashed")) do |notification|
+      notification.severity = "info"
+    end
+    expect(Bugsnag).to have_sent_notification{ |payload|
+      event = get_event_from_payload(payload)
+      expect(event["unhandled"]).to be false
+      expect(event["severity"]).to eq("info")
+      expect(event["severityReason"]).to eq({
+        "type" => "userCallbackSetSeverity"
+      })
+    }
+  end
+
+  it "sets unhandled and severityReasons through auto_notify" do
+    Bugsnag.auto_notify(BugsnagTestException.new("It crashed"), {
+      :severity_reason => {
+        :type => "unhandledExceptionMiddleware",
+        :attributes => {
+          :framework => "ruby test"
+        }
+      }
+    })
+    expect(Bugsnag).to have_sent_notification{ |payload|
+      event = get_event_from_payload(payload)
+      expect(event["unhandled"]).to be true
+      expect(event["severity"]).to eq("error")
+      expect(event["severityReason"]).to eq({
+        "type" => "unhandledExceptionMiddleware",
+        "attributes" => {
+          "framework" => "ruby test"
+        }
+      })
+    }
+  end
+
+  it "sets correct severity and reason for specific error classes" do
+    Bugsnag.notify(SignalException.new("TERM"))
+    expect(Bugsnag).to have_sent_notification{ |payload|
+      event = get_event_from_payload(payload)
+      expect(event["unhandled"]).to be false
+      expect(event["severity"]).to eq("info")
+      expect(event["severityReason"]).to eq({
+        "type" => "errorClass",
+        "attributes" => {
+          "errorClass" => "SignalException"
+        }
+      })
+    }
+  end
+
   # TODO: nested context
 
   it "accepts tabs in overrides and adds them to metaData" do
@@ -580,12 +657,6 @@ describe Bugsnag::Notification do
     }
   end
 
-  it "does not notify if the exception class is in the default ignore_classes list" do
-    Bugsnag.notify_or_ignore(ActiveRecord::RecordNotFound.new("It crashed"))
-
-    expect(Bugsnag).not_to have_sent_notification
-  end
-
   it "does not notify if the non-default exception class is added to the ignore_classes" do
     Bugsnag.configuration.ignore_classes << "BugsnagTestException"
 
@@ -895,8 +966,8 @@ describe Bugsnag::Notification do
 
       expect(Bugsnag).to have_sent_notification{ |payload|
         exception = get_exception_from_payload(payload)
-        expect(exception["errorClass"]).to eq('Java::JavaLang::ArrayIndexOutOfBoundsException')
-        expect(exception["message"]).to eq("2")
+        expect(exception["errorClass"]).to eq('Java::JavaLang::NullPointerException')
+        expect(exception["message"]).to eq("")
         expect(exception["stacktrace"].size).to be > 0
       }
     end

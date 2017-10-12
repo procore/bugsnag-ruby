@@ -1,6 +1,135 @@
 Changelog
 =========
 
+## 5.4.1 (06 Oct 2017)
+
+### Fixes
+
+* [DelayedJob] Fix `NameError` occurring on erroring job notification
+  | [Eito Katagiri](https://github.com/eitoball)
+  | [#377](https://github.com/bugsnag/bugsnag-ruby/pull/377)
+
+* Fixed failing Rake/Java tests
+  | [#378](https://github.com/bugsnag/bugsnag-ruby/pull/378)
+
+## 5.4.0 (02 Oct 2017)
+
+This release removes the default setting of ignoring classes of errors which are commonly associated with typos or server signals (`SystemExit`), instead recording them as `info`-level severity by default. This includes the following classes:
+
+```
+  AbstractController::ActionNotFound,
+  ActionController::InvalidAuthenticityToken,
+  ActionController::ParameterMissing,
+  ActionController::RoutingError,
+  ActionController::UnknownAction,
+  ActionController::UnknownFormat,
+  ActionController::UnknownHttpMethod,
+  ActiveRecord::RecordNotFound,
+  CGI::Session::CookieStore::TamperedWithCookie,
+  Mongoid::Errors::DocumentNotFound,
+  SignalException,
+  SystemExit
+```
+
+### Enhancements
+
+* Add a one-time warning if the API key is not set
+* Track whether errors were captured automatically and by which middleware
+
+## 5.3.3 (16 June 2017)
+
+* [Rails] Fix failure to report when encountering objects which throw in `to_s`
+  [#361](https://github.com/bugsnag/bugsnag-ruby/pull/361)
+
+## 5.3.2 (27 April 2017)
+
+### Bug fixes
+
+* [Sidekiq] Revert commit [c7862ea](https://github.com/bugsnag/bugsnag-ruby/commit/c7862ea90397357f8daad8698c1572230f65075c)
+  because Sidekiq's logging middleware was removed in version 5.0.0
+  | [Reuben Brown](https://github.com/reubenbrown)
+  | [#358](https://github.com/bugsnag/bugsnag-ruby/pull/358)
+
+## 5.3.1 (20 April 2017)
+
+### Bug fixes
+
+* [Resque] Fix error when creating a worker without a queue
+  | [Dean Galvin](https://github.com/FreekingDean)
+  | [#355](https://github.com/bugsnag/bugsnag-ruby/pull/355)
+
+## 5.3.0 (07 April 2017)
+
+### Enhancements
+
+* [Resque] Fix leaking config into parent process
+  | [Martin Holman](https://github.com/martin308)
+  | [#347](https://github.com/bugsnag/bugsnag-ruby/pull/347)
+* Add new integration for Que
+  | [Sjoerd Andringa](https://github.com/s-andringa)
+  | [#305](https://github.com/bugsnag/bugsnag-ruby/pull/305)
+* [Sidekiq] Start Bugsnag after the logger in the middleware chain
+  | [Stephen Bussey](https://github.com/sb8244)
+  | [Akhil Naini](https://github.com/akhiln)
+  | [#326](https://github.com/bugsnag/bugsnag-ruby/pull/326)
+  | [#350](https://github.com/bugsnag/bugsnag-ruby/pull/350)
+* [Rake] Allow overriding `app_type` apps
+  | [#351](https://github.com/bugsnag/bugsnag-ruby/issues/351)
+* Send the dyno name as the hostname when running on Heroku
+  | [#333](https://github.com/bugsnag/bugsnag-ruby/issues/333)
+* [Delayed Job] Add additional job information such as arguments and number of
+  attempts when available
+  | [Tim Diggins](https://github.com/timdiggins)
+  | [Abraham Chan](https://github.com/abraham-chan)
+  | [Johnny Shields](https://github.com/johnnyshields)
+  | [#329](https://github.com/bugsnag/bugsnag-ruby/pull/329)
+  | [#332](https://github.com/bugsnag/bugsnag-ruby/pull/332)
+  | [#321](https://github.com/bugsnag/bugsnag-ruby/pull/321)
+
+### Bug fixes
+
+* Initialize Railtie after Bugsnag class
+  | [#343](https://github.com/bugsnag/bugsnag-ruby/issues/343)
+* Alias `notify_or_ignore` to `notify`
+  | [Simon Maynard](https://github.com/snmaynard)
+  | [#319](https://github.com/bugsnag/bugsnag-ruby/pull/319)
+
+## 5.2.0 (10 February 2017)
+
+### Enhancements
+
+* Allow provider attribute in Deploy#notify
+  | [@jbaranov](https://github.com/jbaranov)
+  | [#339](https://github.com/bugsnag/bugsnag-ruby/pull/339)
+
+### Bug fixes
+
+* Correctly hook on Action Controller
+  | [@rafaelfranca](https://github.com/rafaelfranca)
+  | [#338](https://github.com/bugsnag/bugsnag-ruby/pull/338)
+* Fix Bugsnag error message typo
+  | [@Adsidera](https://github.com/Adsidera)
+  | [#344](https://github.com/bugsnag/bugsnag-ruby/pull/344)
+* Default delivery method
+  | [@martin308](https://github.com/martin308)
+  | [#346](https://github.com/bugsnag/bugsnag-ruby/pull/346)
+
+## 5.1.0 (23 January 2017)
+
+### Bug fixes
+
+* Fix behavior to not override Rails 5 `belongs_to` association
+  | [#314](https://github.com/bugsnag/bugsnag-ruby/pull/314)
+
+### Enhancements
+
+* Add Clearance support
+  | [Jonathan Rochkind](https://github.com/jrochkind)
+  | [#313](https://github.com/bugsnag/bugsnag-ruby/pull/313)
+* Add Shoruken support
+  | [Nigel Ramsay](https://github.com/nigelramsay)
+  | [#324](https://github.com/bugsnag/bugsnag-ruby/pull/324)
+
 ## 5.0.1 (7 September 2016)
 
 ### Bug fixes

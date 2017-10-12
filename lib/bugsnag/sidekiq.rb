@@ -5,7 +5,7 @@ module Bugsnag
     def initialize
       Bugsnag.configuration.internal_middleware.use(Bugsnag::Middleware::Sidekiq)
       Bugsnag.configuration.app_type = "sidekiq"
-      Bugsnag.configuration.delivery_method = :synchronous
+      Bugsnag.configuration.default_delivery_method = :synchronous
     end
 
     def call(worker, msg, queue)
@@ -16,7 +16,14 @@ module Bugsnag
         yield
       rescue Exception => ex
         raise ex if [Interrupt, SystemExit, SignalException].include? ex.class
-        Bugsnag.auto_notify(ex)
+        Bugsnag.auto_notify(ex, {
+          :severity_reason => {
+            :type => Bugsnag::Notification::UNHANDLED_EXCEPTION_MIDDLEWARE,
+            :attributes => {
+              :framework => "Sidekiq"
+            }
+          }
+        })
         raise
       ensure
         Bugsnag.clear_request_data
@@ -27,6 +34,10 @@ end
 
 ::Sidekiq.configure_server do |config|
   config.server_middleware do |chain|
-    chain.add ::Bugsnag::Sidekiq
+    if Gem::Version.new(Sidekiq::VERSION) >= Gem::Version.new('3.3.0')
+      chain.prepend ::Bugsnag::Sidekiq
+    else
+      chain.add ::Bugsnag::Sidekiq
+    end
   end
 end
